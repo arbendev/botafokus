@@ -158,22 +158,6 @@ a:hover {
     border-bottom: 1px solid #f0f0f0;
 }
 
-/* Adjusting specific border colors where they differed slightly in original, or consolidating to f0f0f0 if deemed safe. 
-   Originals: 
-   mini-article: f0f0f0
-   text-list: f0f0f0
-   latest-list: f5f5f5 -> Keeping separate or merging? Let's use f5f5f5 for latest-list to be safe.
-   video-item: f0f0f0
-   related-list: f2f2f2 -> slightly different
-   category-list-item: f3f3f3
-   search-result: f3f3f3
-   404-headlines: f3f3f3
-   video-recent-item: f3f3f3
-   video-upnext-list: f3f3f3 
-   
-   DECISION: Group f3f3f3 items together.
-*/
-
 .bf-category-list-item,
 .bf-search-result,
 .bf-404-headlines li,
