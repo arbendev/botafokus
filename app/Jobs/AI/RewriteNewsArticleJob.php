@@ -1,6 +1,7 @@
 <?php
 namespace App\Jobs\AI;
 
+use App\Models\AiJobLog;
 use App\Models\Article;
 use App\Models\RawArticle;
 use App\Models\Tag;
@@ -11,56 +12,121 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
+use Throwable;
 
 class RewriteNewsArticleJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $timeout = 120;
+    public int $timeout = 180;
 
     public function __construct(
-        protected array $sourceData
+        public int $rawArticleId,
+        public string $outletName,
+        public string $targetLanguage,
+        public ?int $aiJobLogId = null
     ) {}
 
     public function handle(NewsAiService $ai): void
     {
-        // 1. Store raw article
-        $raw = RawArticle::firstOrCreate(
-            ['source_url' => $this->sourceData['source_url']],
-            [
-                'source_type'         => $this->sourceData['source_type'] ?? 'unknown',
-                'source_name'         => $this->sourceData['source_name'] ?? null,
-                'source_title'        => $this->sourceData['source_title'],
-                'source_content'      => $this->sourceData['source_content'],
-                'source_published_at' => $this->sourceData['source_published_at'] ?? null,
-                'content_hash'        => sha1($this->sourceData['source_content']),
-            ]
-        );
+        $log = $this->aiJobLogId ? AiJobLog::find($this->aiJobLogId) : null;
 
-        // 2. Run AI
-        $aiResult = $ai->rewriteAndTranslate($this->sourceData);
+        if ($log) {
+            $log->update([
+                'status'     => 'running',
+                'started_at' => now(),
+            ]);
+        }
 
-        // 3. Create article draft
-        $article = Article::create([
-            'raw_article_id'  => $raw->id,
-            'status'          => 'ai_draft',
-            'slug'            => Str::slug($aiResult['title']) . '-' . Str::random(6),
-            'title'           => $aiResult['title'],
-            'lead'            => $aiResult['lead'],
-            'body'            => $aiResult['body'],
-            'location_label'  => $aiResult['location_label'],
-            'seo_title'       => $aiResult['seo_title'],
-            'seo_description' => $aiResult['seo_description'],
-        ]);
+        $raw = RawArticle::findOrFail($this->rawArticleId);
 
-        // 4. Tags
-        $tagIds = collect($aiResult['tags'])->map(function ($name) {
-            return Tag::firstOrCreate(
-                ['slug' => Str::slug($name)],
-                ['name' => $name]
-            )->id;
-        });
+        $payload = [
+            'outlet_name'         => $this->outletName,
+            'target_language'     => $this->targetLanguage,
+            'source_title'        => $raw->source_title,
+            'source_url'          => $raw->source_url,
+            'source_published_at' => optional($raw->source_published_at)->toIso8601String(),
+            'source_content'      => $raw->source_content,
 
-        $article->tags()->sync($tagIds);
+            // optional fields for prompt compatibility, if you later add them
+            'source_type'         => $raw->source_type,
+            'source_name'         => $raw->source_name,
+        ];
+
+        try {
+            if ($log) {
+                $log->update([
+                    'payload' => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ]);
+            }
+
+            $aiResult = $ai->rewriteAndTranslate($payload);
+
+            $article = Article::create([
+                'raw_article_id'  => $raw->id,
+                'status'          => 'ai_draft',
+                'slug'            => $this->uniqueSlugFromTitle($aiResult['title']),
+                'title'           => $aiResult['title'],
+                'lead'            => $aiResult['lead'],
+                'body'            => $aiResult['body'],
+                'location_label'  => $aiResult['location_label'],
+                'seo_title'       => $aiResult['seo_title'],
+                'seo_description' => $aiResult['seo_description'],
+            ]);
+
+            $tagIds = collect($aiResult['tags'])->map(function ($name) {
+                $name = trim((string) $name);
+                if ($name === '') {
+                    return null;
+                }
+
+                return Tag::firstOrCreate(
+                    ['slug' => Str::slug($name)],
+                    ['name' => $name]
+                )->id;
+            })->filter()->values();
+
+            $article->tags()->sync($tagIds->all());
+
+            if ($log) {
+                $log->update([
+                    'article_id'  => $article->id,
+                    'status'      => 'success',
+                    'message'     => 'AI rewrite completed and saved as draft.',
+                    'result'      => json_encode($aiResult, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                    'finished_at' => now(),
+                ]);
+            }
+        } catch (Throwable $e) {
+            if ($log) {
+                $log->update([
+                    'status'      => 'failed',
+                    'message'     => 'AI rewrite failed.',
+                    'error'       => $e->getMessage(),
+                    'finished_at' => now(),
+                ]);
+            }
+
+            // Re-throw so the queue can record the failure + retry based on your config
+            throw $e;
+        }
+    }
+
+    private function uniqueSlugFromTitle(string $title): string
+    {
+        $base = Str::slug($title);
+        if ($base === '') {
+            $base = 'article';
+        }
+
+        $slug = $base;
+        $i    = 2;
+
+        while (Article::where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $i;
+            $i++;
+        }
+
+        return $slug;
     }
 }
