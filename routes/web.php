@@ -1,6 +1,16 @@
 <?php
 
+use App\Http\Controllers\Editor\EditorHomeController;
+use App\Livewire\Editor\ArticleEdit;
+use App\Livewire\Editor\ArticleInbox;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware(['web', 'auth'])->prefix('editor')->name('editor.')->group(function () {
+    Route::get('/', [EditorHomeController::class, 'index'])->name('home');
+
+    Route::get('/articles', ArticleInbox::class)->name('articles.index');
+    Route::get('/articles/{article}', ArticleEdit::class)->name('articles.edit');
+});
 
 Route::get('/', function () {
     return view('welcome');
