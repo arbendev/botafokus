@@ -35,7 +35,39 @@
 
                     {{-- Collapsing content --}}
                     <div class="collapse navbar-collapse" id="bfNavbar">
+
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            @php
+                                $navCategories = \App\Models\Category::where('active', true)
+                                    ->orderBy('order_index')
+                                    ->get();
+                            @endphp
+
+                            @foreach ($navCategories as $cat)
+                                <li class="nav-item">
+                                    <a class="nav-link"
+                                        href="{{ route('categories.show', $cat->slug) }}">{{ $cat->name }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        <div class="d-flex gap-2 align-items-center">
+                            <form class="d-flex" method="GET" action="{{ url('/search') }}">
+                                <input class="form-control form-control-sm me-2" type="search" name="q"
+                                    placeholder="Search">
+                                <button class="btn btn-outline-dark btn-sm" type="submit">Search</button>
+                            </form>
+
+                            @auth
+                                <a class="btn btn-outline-secondary btn-sm"
+                                    href="{{ route('editor.articles.index') }}">Editor</a>
+                            @else
+                                <a class="btn btn-outline-secondary btn-sm" href="{{ route('login') }}">Login</a>
+                            @endauth
+                        </div>
+
                         {{-- Main menu --}}
+                        {{-- 
                         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                             <li class="nav-item"><a class="nav-link" href="/categories">Botë</a></li>
                             <li class="nav-item"><a class="nav-link" href="#">Politikë</a></li>
@@ -47,12 +79,13 @@
                             <li class="nav-item"><a class="nav-link" href="#">Kulturë</a></li>
                         </ul>
 
-                        {{-- Search --}}
+
                         <form class="d-flex align-items-center gap-2 mt-3 mt-lg-0" role="search">
                             <input class="form-control form-control-sm bf-search-input" type="search"
                                 placeholder="Kërko..." aria-label="Kërko">
                             <a href="#" class="bf-login-link">Kyçu</a>
                         </form>
+                                                --}}
                     </div>
                 </div>
             </nav>

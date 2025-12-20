@@ -6,6 +6,7 @@ use App\Http\Controllers\Public\CategoryController;
 use App\Livewire\Editor\AiJobLogIndex;
 use App\Livewire\Editor\ArticleEdit;
 use App\Livewire\Editor\ArticleInbox;
+use App\Livewire\Editor\CategoryIndex;
 use App\Livewire\Editor\SourceSubmit;
 use App\Livewire\Public\HomePage;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,8 @@ Route::middleware(['web', 'auth'])->prefix('editor')->name('editor.')->group(fun
 });
 
 Route::get('/', HomePage::class)->name('home');
+
+Route::get('/categories', CategoryIndex::class)->name('categories.index');
 
 Route::get('/categories/{slug}', [CategoryController::class, 'show'])
     ->name('categories.show');
