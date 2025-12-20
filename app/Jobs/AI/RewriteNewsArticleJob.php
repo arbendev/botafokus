@@ -1,13 +1,16 @@
 <?php
 namespace App\Jobs\AI;
 
+use App\Models\Article;
+use App\Models\RawArticle;
+use App\Models\Tag;
 use App\Services\AI\NewsAiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class RewriteNewsArticleJob implements ShouldQueue
 {
@@ -15,36 +18,49 @@ class RewriteNewsArticleJob implements ShouldQueue
 
     public int $timeout = 120;
 
-    /**
-     * @param  array<string, mixed>  $sourceData
-     */
     public function __construct(
         protected array $sourceData
     ) {}
 
     public function handle(NewsAiService $ai): void
     {
-        Log::info('Starting AI rewrite job', [
-            'source_title' => $this->sourceData['source_title'] ?? null,
+        // 1. Store raw article
+        $raw = RawArticle::firstOrCreate(
+            ['source_url' => $this->sourceData['source_url']],
+            [
+                'source_type'         => $this->sourceData['source_type'] ?? 'unknown',
+                'source_name'         => $this->sourceData['source_name'] ?? null,
+                'source_title'        => $this->sourceData['source_title'],
+                'source_content'      => $this->sourceData['source_content'],
+                'source_published_at' => $this->sourceData['source_published_at'] ?? null,
+                'content_hash'        => sha1($this->sourceData['source_content']),
+            ]
+        );
+
+        // 2. Run AI
+        $aiResult = $ai->rewriteAndTranslate($this->sourceData);
+
+        // 3. Create article draft
+        $article = Article::create([
+            'raw_article_id'  => $raw->id,
+            'status'          => 'ai_draft',
+            'slug'            => Str::slug($aiResult['title']) . '-' . Str::random(6),
+            'title'           => $aiResult['title'],
+            'lead'            => $aiResult['lead'],
+            'body'            => $aiResult['body'],
+            'location_label'  => $aiResult['location_label'],
+            'seo_title'       => $aiResult['seo_title'],
+            'seo_description' => $aiResult['seo_description'],
         ]);
 
-        $result = $ai->rewriteAndTranslate($this->sourceData);
+        // 4. Tags
+        $tagIds = collect($aiResult['tags'])->map(function ($name) {
+            return Tag::firstOrCreate(
+                ['slug' => Str::slug($name)],
+                ['name' => $name]
+            )->id;
+        });
 
-        /**
-         * IMPORTANT:
-         * We are NOT saving to the database yet.
-         * That comes in the next step when we introduce:
-         * - raw_articles
-         * - articles
-         * - editorial statuses
-         */
-
-        Log::info('AI rewrite completed', [
-            'title' => $result['title'],
-            'tags'  => $result['tags'],
-        ]);
-
-        // For now, just dump into logs so we can test safely
-        Log::debug('AI article payload', $result);
+        $article->tags()->sync($tagIds);
     }
 }
