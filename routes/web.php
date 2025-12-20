@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\Editor\EditorHomeController;
+use App\Http\Controllers\Public\ArticleController;
+use App\Http\Controllers\Public\CategoryController;
 use App\Livewire\Editor\AiJobLogIndex;
 use App\Livewire\Editor\ArticleEdit;
 use App\Livewire\Editor\ArticleInbox;
 use App\Livewire\Editor\SourceSubmit;
+use App\Livewire\Public\HomePage;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->prefix('editor')->name('editor.')->group(function () {
@@ -17,9 +20,13 @@ Route::middleware(['web', 'auth'])->prefix('editor')->name('editor.')->group(fun
     Route::get('/ai/logs', AiJobLogIndex::class)->name('ai.logs');
 });
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', HomePage::class)->name('home');
+
+Route::get('/categories/{slug}', [CategoryController::class, 'show'])
+    ->name('categories.show');
+
+Route::get('/news/{slug}', [ArticleController::class, 'show'])
+    ->name('articles.show');
 
 Auth::routes();
 
