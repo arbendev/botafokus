@@ -26,6 +26,7 @@ class Article extends Model
 
     protected $casts = [
         'published_at' => 'datetime',
+        'publish_at'   => 'datetime',
         'is_featured'  => 'boolean',
     ];
 
@@ -42,5 +43,18 @@ class Article extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function isPublished(): bool
+    {
+        if ($this->status !== 'published') {
+            return false;
+        }
+
+        if ($this->publish_at && $this->publish_at->isFuture()) {
+            return false;
+        }
+
+        return true;
     }
 }

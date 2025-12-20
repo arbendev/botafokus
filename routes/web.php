@@ -31,6 +31,16 @@ Route::get('/categories/{slug}', [CategoryController::class, 'show'])
 Route::get('/news/{slug}', [ArticleController::class, 'show'])
     ->name('articles.show');
 
+Route::get('/topics/{slug}', function ($slug) {
+    $tag = \App\Models\Tag::where('slug', $slug)->firstOrFail();
+
+    $articles = $tag->articles()
+        ->where('status', 'published')
+        ->paginate(12);
+
+    return view('public.topic-show', compact('tag', 'articles'));
+});
+
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

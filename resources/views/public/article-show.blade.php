@@ -43,4 +43,18 @@
         @endif
 
     </article>
+
+    <section class="mb-4">
+        <h6 class="fw-semibold">Më të lexuarat</h6>
+        <ol class="list-group list-group-numbered">
+            @foreach ($mostRead as $a)
+                <li class="list-group-item">
+                    <a href="{{ route('articles.show', $a->slug) }}" class="text-decoration-none">
+                        {{ $a->title }}
+                    </a>
+                </li>
+            @endforeach
+        </ol>
+    </section>
+
 </div>

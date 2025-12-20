@@ -16,6 +16,12 @@ class ArticleController
         // increment view count safely
         $article->increment('view_count');
 
+        $mostRead = Article::where('category_id', $category->id)
+            ->where('status', 'published')
+            ->orderByDesc('view_count')
+            ->limit(5)
+            ->get();
+
         return view('public.article-show', compact('article'));
     }
 }
