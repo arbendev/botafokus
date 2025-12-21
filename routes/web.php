@@ -8,22 +8,57 @@ use App\Livewire\Editor\ArticleEdit;
 use App\Livewire\Editor\ArticleInbox;
 use App\Livewire\Editor\CategoryIndex;
 use App\Livewire\Editor\SourceSubmit;
+use App\Livewire\Editor\UrlSubmit;
 use App\Livewire\Public\HomePage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['web', 'auth'])->prefix('editor')->name('editor.')->group(function () {
-    Route::get('/', [EditorHomeController::class, 'index'])->name('home');
+/*
+|--------------------------------------------------------------------------
+| Editor / Staff Routes
+|--------------------------------------------------------------------------
+| All editorial functionality lives under /editor
+| Protected by auth middleware
+*/
 
-    Route::get('/articles', ArticleInbox::class)->name('articles.index');
-    Route::get('/articles/{article}', ArticleEdit::class)->name('articles.edit');
+Route::middleware(['web', 'auth'])
+    ->prefix('editor')
+    ->name('editor.')
+    ->group(function () {
 
-    Route::get('/sources/submit', SourceSubmit::class)->name('sources.submit');
-    Route::get('/ai/logs', AiJobLogIndex::class)->name('ai.logs');
-});
+        Route::get('/', [EditorHomeController::class, 'index'])
+            ->name('home');
 
-Route::get('/', HomePage::class)->name('home');
+        // Articles
+        Route::get('/articles', ArticleInbox::class)
+            ->name('articles.index');
 
-Route::get('/categories', CategoryIndex::class)->name('categories.index');
+        Route::get('/articles/{article}', ArticleEdit::class)
+            ->name('articles.edit');
+
+        // Source ingestion
+        Route::get('/sources/submit', SourceSubmit::class)
+            ->name('sources.submit');
+
+        Route::get('/sources/submit-url', UrlSubmit::class)
+            ->name('sources.submit_url');
+
+        // AI logs
+        Route::get('/ai/logs', AiJobLogIndex::class)
+            ->name('ai.logs');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Public Website Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/', HomePage::class)
+    ->name('home');
+
+Route::get('/categories', CategoryIndex::class)
+    ->name('categories.index');
 
 Route::get('/categories/{slug}', [CategoryController::class, 'show'])
     ->name('categories.show');
@@ -31,7 +66,7 @@ Route::get('/categories/{slug}', [CategoryController::class, 'show'])
 Route::get('/news/{slug}', [ArticleController::class, 'show'])
     ->name('articles.show');
 
-Route::get('/topics/{slug}', function ($slug) {
+Route::get('/topics/{slug}', function (string $slug) {
     $tag = \App\Models\Tag::where('slug', $slug)->firstOrFail();
 
     $articles = $tag->articles()
@@ -41,26 +76,22 @@ Route::get('/topics/{slug}', function ($slug) {
     return view('public.topic-show', compact('tag', 'articles'));
 });
 
+/*
+|--------------------------------------------------------------------------
+| Auth Routes
+|--------------------------------------------------------------------------
+*/
+
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+/*
+|--------------------------------------------------------------------------
+| Legacy / Static Demo Pages (Optional)
+|--------------------------------------------------------------------------
+| These can be removed once fully dynamic
+*/
 
-Route::get('/categories', function () {
-    return view('news.index');
-});
-
-Route::get('/categories/article', function () {
-    return view('news.show');
-});
-
-Route::get('/videos', function () {
-    return view('videos.index');
-});
-
-Route::get('/videos/video', function () {
-    return view('videos.show');
-});
-
-Route::get('/search', function () {
-    return view('search.index');
-});
+Route::get('/categories/article', fn() => view('news.show'));
+Route::get('/videos', fn() => view('videos.index'));
+Route::get('/videos/video', fn() => view('videos.show'));
+Route::get('/search', fn() => view('search.index'));

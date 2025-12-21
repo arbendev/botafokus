@@ -13,5 +13,17 @@ class RawArticle extends Model
         'source_content',
         'source_published_at',
         'content_hash',
+        'status',
+        'meta',
     ];
+
+    protected $casts = [
+        'source_published_at' => 'datetime',
+        'meta'                => 'array',
+    ];
+
+    public function article()
+    {
+        return $this->hasOne(Article::class);
+    }
 }
