@@ -9,7 +9,7 @@ class Article extends Model
 {
     protected $fillable = [
         'raw_article_id',
-        'category_id',
+        'category_id', // keep for now (backward compatibility)
         'status',
         'slug',
         'title',
@@ -40,6 +40,13 @@ class Article extends Model
         return $this->belongsToMany(Tag::class);
     }
 
+    // ✅ NEW: many-to-many categories
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class);
+    }
+
+    // OLD (can be removed later safely)
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

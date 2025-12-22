@@ -131,6 +131,19 @@
 
                     <hr class="my-4">
 
+                    <h2 class="h6 mb-3">Categories</h2>
+
+                    <div class="d-flex flex-column gap-2">
+                        @foreach ($allCategories as $category)
+                            <label class="d-flex align-items-center gap-2">
+                                <input type="checkbox" value="{{ $category->id }}" wire:model="categoryIds">
+                                <span>{{ $category->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    <hr class="my-4">
+
                     <h2 class="h6 mb-3">Media</h2>
 
                     <div class="mb-3">

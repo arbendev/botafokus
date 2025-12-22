@@ -2,7 +2,6 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
-use App\Models\Article;
 use App\Models\Category;
 use Illuminate\View\View;
 
@@ -17,7 +16,7 @@ class CategoryController extends Controller
         /**
          * Featured articles (top 2)
          */
-        $featured = Article::where('category_id', $category->id)
+        $featured = $category->articles()
             ->where('status', 'published')
             ->orderByDesc('published_at')
             ->limit(2)
@@ -26,7 +25,7 @@ class CategoryController extends Controller
         /**
          * Main grid articles (next batch)
          */
-        $mainArticles = Article::where('category_id', $category->id)
+        $mainArticles = $category->articles()
             ->where('status', 'published')
             ->orderByDesc('published_at')
             ->skip(2)
@@ -36,16 +35,16 @@ class CategoryController extends Controller
         /**
          * Long list (paginated)
          */
-        $allArticles = Article::where('category_id', $category->id)
+        $allArticles = $category->articles()
             ->where('status', 'published')
             ->orderByDesc('published_at')
             ->paginate(10);
 
         /**
          * Sidebar: "Most read" (fallback = latest)
-         * NO `views` column used
+         * Still no views column
          */
-        $mostRead = Article::where('category_id', $category->id)
+        $mostRead = $category->articles()
             ->where('status', 'published')
             ->orderByDesc('published_at')
             ->limit(5)

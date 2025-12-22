@@ -2,6 +2,7 @@
 namespace App\Livewire\Editor;
 
 use App\Models\Article;
+use App\Models\Category;
 use App\Models\Tag;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -25,8 +26,12 @@ class ArticleEdit extends Component
 
     public string $status = 'ai_draft';
 
-    // Comma separated for editor convenience
+    // Existing
     public string $tagsInput = '';
+
+    // ✅ NEW (categories)
+    public array $categoryIds = [];
+    public $allCategories;
 
     protected function rules(): array
     {
@@ -40,6 +45,7 @@ class ArticleEdit extends Component
             'seo_description' => ['nullable', 'string', 'max:500'],
             'hero_image_url'  => ['nullable', 'string', 'max:2000'],
             'hero_image_alt'  => ['nullable', 'string', 'max:255'],
+            'categoryIds'     => ['array'],
         ];
     }
 
@@ -58,16 +64,28 @@ class ArticleEdit extends Component
         $this->hero_image_alt  = $article->hero_image_alt;
         $this->status          = $article->status;
 
+        // Tags
         $this->tagsInput = $article->tags()
             ->orderBy('name')
             ->pluck('name')
             ->implode(', ');
+
+        // ✅ Categories
+        $this->categoryIds = $article->categories()
+            ->pluck('categories.id')
+            ->toArray();
+
+        $this->allCategories = Category::where('active', true)
+            ->orderBy('order_index')
+            ->get();
     }
 
     public function updatedTitle(): void
     {
-        // Only auto-suggest slug if it matches the old title-slug-ish pattern
-        if (trim($this->slug) === '' || Str::startsWith($this->slug, Str::slug($this->article->title))) {
+        if (
+            trim($this->slug) === '' ||
+            Str::startsWith($this->slug, Str::slug($this->article->title))
+        ) {
             $this->slug = Str::slug($this->title);
         }
     }
@@ -79,6 +97,9 @@ class ArticleEdit extends Component
         DB::transaction(function () {
             $this->persistArticle();
             $this->syncTags();
+
+            // ✅ sync categories
+            $this->article->categories()->sync($this->categoryIds);
         });
 
         $this->dispatch('notify', type: 'success', message: 'Draft saved.');
@@ -149,7 +170,7 @@ class ArticleEdit extends Component
     {
         $names = collect(explode(',', $this->tagsInput))
             ->map(fn($t) => trim($t))
-            ->filter(fn($t) => $t !== '')
+            ->filter()
             ->unique()
             ->take(12);
 
@@ -165,7 +186,7 @@ class ArticleEdit extends Component
 
     public function render()
     {
-        $this->article->load('rawArticle', 'tags');
+        $this->article->load('rawArticle', 'tags', 'categories');
 
         return view('livewire.editor.article-edit', [
             'raw' => $this->article->rawArticle,
