@@ -68,6 +68,7 @@
                                 </button>
                             </form>
 
+                            {{-- 
                             @auth
                                 <a class="btn btn-outline-secondary btn-sm" href="{{ route('editor.articles.index') }}">
                                     Editor
@@ -77,6 +78,7 @@
                                     Login
                                 </a>
                             @endauth
+                            --}}
                         </div>
 
                     </div>
@@ -110,12 +112,14 @@
                             </div>
 
                             <p class="bf-footer-tagline">
-                                Platformë lajmesh dhe analizash globale në gjuhën shqipe, me fokus tek saktësia,
+                                Platformë lajmesh dhe analizash globale në gjuhën shqipe, me fokus
+                                tek saktësia,
                                 konteksti dhe verifikimi i fakteve.
                             </p>
 
                             <p class="bf-footer-mini">
-                                BotaFokus.com përkthen, kuron dhe shpjegon ngjarjet kryesore botërore për lexuesit
+                                BotaFokus.com përkthen, kuron dhe shpjegon ngjarjet kryesore
+                                botërore për lexuesit
                                 shqiptarë, kudo që ndodhen.
                             </p>
                         </div>
