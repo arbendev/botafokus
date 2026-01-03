@@ -54,9 +54,9 @@ class HomePage extends Component
             ->get();
 
         $sections = $categories->map(function ($cat) {
-            // Fetch latest 5 articles for this category WITHOUT exclusion
-            $articles = Article::where('status', 'published')
-                ->where('category_id', $cat->id)
+            // Fetch latest 5 articles for this category via Many-to-Many relationship
+            $articles = $cat->articles()
+                ->where('status', 'published')
                 ->orderByDesc('published_at')
                 ->limit(5)
                 ->get();
