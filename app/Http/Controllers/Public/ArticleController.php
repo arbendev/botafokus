@@ -20,9 +20,22 @@ class ArticleController extends Controller
             ->limit(5)
             ->get();
 
+        // Prepare SEO Data
+        $seo = [
+            'title' => $article->seo_title ?? $article->title,
+            'description' => $article->seo_description ?? \Illuminate\Support\Str::limit($article->lead, 155),
+            'image' => $article->hero_image_url ? asset($article->hero_image_url) : asset('/bota-focus-og.jpg'),
+            'url' => route('articles.show', $article->slug),
+            'published_at' => $article->published_at ? $article->published_at->toIso8601String() : now()->toIso8601String(),
+            'modified_at' => $article->updated_at->toIso8601String(),
+            'category' => $article->category->name ?? 'News',
+            'author' => 'Bota Fokus',
+        ];
+
         return view('public.article-show', compact(
             'article',
-            'mostRead'
+            'mostRead',
+            'seo'
         ));
     }
 }

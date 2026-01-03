@@ -1,3 +1,39 @@
+@section('title', $seo['title'])
+
+@push('seo')
+    <meta name="description" content="{{ $seo['description'] }}">
+    <link rel="canonical" href="{{ $seo['url'] }}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ $seo['url'] }}">
+    <meta property="og:title" content="{{ $seo['title'] }}">
+    <meta property="og:description" content="{{ $seo['description'] }}">
+    <meta property="og:image" content="{{ $seo['image'] }}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ $seo['url'] }}">
+    <meta name="twitter:title" content="{{ $seo['title'] }}">
+    <meta name="twitter:description" content="{{ $seo['description'] }}">
+    <meta name="twitter:image" content="{{ $seo['image'] }}">
+
+    @php
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => 'Bota Fokus',
+            'url' => $seo['url'],
+            'potentialAction' => [
+                '@type' => 'SearchAction',
+                'target' => $seo['url'] . '/search?q={search_term_string}',
+                'query-input' => 'required name=search_term_string',
+            ],
+        ];
+    @endphp
+
+    <script type="application/ld+json">
+        {!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+@endpush
 
 <div class="container-xl px-3 py-4">
     <div class="row g-4">
@@ -85,8 +121,10 @@
 
             {{-- CATEGORY SECTIONS --}}
             @foreach ($sections as $section)
-                @php($cat = $section['category'])
-                @php($articles = $section['articles'])
+                @php
+                    $cat = $section['category'];
+                    $articles = $section['articles'];
+                @endphp
 
                 @if ($articles->count())
                     <section class="mb-5">
@@ -138,20 +176,7 @@
                     @endforeach
                 </ul>
             </section>
+
         </div>
-
-        {{-- RIGHT SIDEBAR PLACEHOLDER (Video later) --}}
-        <aside class="col-lg-3">
-            <div class="border rounded p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="fw-semibold small mb-0">VIDEO</div>
-                    <a href="#" class="text-decoration-none small">Shiko të gjitha →</a>
-                </div>
-
-                <div class="text-muted small">
-                    (Video module comes next — we’ll build it as its own content type.)
-                </div>
-            </div>
-        </aside>
     </div>
 </div>

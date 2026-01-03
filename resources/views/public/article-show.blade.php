@@ -1,66 +1,59 @@
 @extends('layouts.app')
 
+@section('title', $seo['title'] . ' | ' . config('app.name'))
+
 @push('seo')
+    <meta name="description" content="{{ $seo['description'] }}">
+    <link rel="canonical" href="{{ $seo['url'] }}">
+
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ $seo['url'] }}">
+    <meta property="og:title" content="{{ $seo['title'] }}">
+    <meta property="og:description" content="{{ $seo['description'] }}">
+    <meta property="og:image" content="{{ $seo['image'] }}">
+    <meta property="og:site_name" content="{{ config('app.name') }}">
+    <meta property="article:published_time" content="{{ $seo['published_at'] }}">
+    <meta property="article:modified_time" content="{{ $seo['modified_at'] }}">
+    <meta property="article:section" content="{{ $seo['category'] }}">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ $seo['url'] }}">
+    <meta name="twitter:title" content="{{ $seo['title'] }}">
+    <meta name="twitter:description" content="{{ $seo['description'] }}">
+    <meta name="twitter:image" content="{{ $seo['image'] }}">
+
     @php
-        $seoTitle = $article->seo_title ?? $article->title;
-        $seoDesc = $article->seo_description ?? Str::limit($article->lead, 155);
-        $seoImage = $article->hero_image_url ? asset($article->hero_image_url) : asset('/bota-focus-og.jpg'); // Fallback image needed
-        $url = route('articles.show', $article->slug);
-        $publishedAt = $article->published_at ? $article->published_at->toIso8601String() : now()->toIso8601String();
-        $modifiedAt = $article->updated_at->toIso8601String();
-        $author = 'Bota Fokus'; // Or dynamic author if available
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'NewsArticle',
+            'headline' => $seo['title'],
+            'image' => [$seo['image']],
+            'datePublished' => $seo['published_at'],
+            'dateModified' => $seo['modified_at'],
+            'author' => [
+                [
+                    '@type' => 'Organization',
+                    'name' => $seo['author'],
+                    'url' => url('/'),
+                ],
+            ],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => config('app.name'),
+                'logo' => [
+                    '@type' => 'ImageObject',
+                    'url' => asset('/bota-focus.png'),
+                ],
+            ],
+            'description' => $seo['description'],
+        ];
     @endphp
 
-    <title>{{ $seoTitle }} | {{ config('app.name') }}</title>
-    <meta name="description" content="{{ $seoDesc }}">
-    <link rel="canonical" href="{{ $url }}">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="{{ $url }}">
-    <meta property="og:title" content="{{ $seoTitle }}">
-    <meta property="og:description" content="{{ $seoDesc }}">
-    <meta property="og:image" content="{{ $seoImage }}">
-    <meta property="og:site_name" content="{{ config('app.name') }}">
-    <meta property="article:published_time" content="{{ $publishedAt }}">
-    <meta property="article:modified_time" content="{{ $modifiedAt }}">
-    <meta property="article:section" content="{{ $article->category->name ?? 'News' }}">
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ $url }}">
-    <meta name="twitter:title" content="{{ $seoTitle }}">
-    <meta name="twitter:description" content="{{ $seoDesc }}">
-    <meta name="twitter:image" content="{{ $seoImage }}">
-
-    <!-- Schema.org -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "NewsArticle",
-      "headline": "{{ addslashes($seoTitle) }}",
-      "image": [
-        "{{ $seoImage }}"
-      ],
-      "datePublished": "{{ $publishedAt }}",
-      "dateModified": "{{ $modifiedAt }}",
-      "author": [{
-          "@type": "Organization",
-          "name": "{{ $author }}",
-          "url": "{{ url('/') }}"
-      }],
-      "publisher": {
-        "@type": "Organization",
-        "name": "{{ config('app.name') }}",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "{{ asset('/bota-focus.png') }}"
-        }
-      },
-      "description": "{{ addslashes($seoDesc) }}"
-    }
+        {!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
     </script>
 @endpush
+
 
 @section('content')
     <div class="container-xl px-3">
@@ -118,7 +111,7 @@
 
                 <!-- Body -->
                 <div class="bf-article-body">
-                    @foreach (preg_split("/\n\s*\n/", trim($article->body)) as $p)
+                    @foreach ($article->paragraphs as $p)
                         @if (trim($p))
                             <p>{{ $p }}</p>
                         @endif

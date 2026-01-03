@@ -50,12 +50,21 @@ class CategoryController extends Controller
             ->limit(5)
             ->get();
 
+        // SEO Data
+        $seo = [
+            'title' => $category->name . " | Lajme nga Bota Fokus",
+            'description' => "Lajmet dhe analizat më të fundit nga kategoria " . $category->name . ".",
+            'image' => asset('/bota-focus-og.jpg'),
+            'url' => route('categories.show', $category->slug),
+        ];
+
         return view('public.categories.show', compact(
             'category',
             'featured',
             'mainArticles',
             'allArticles',
-            'mostRead'
+            'mostRead',
+            'seo'
         ));
     }
 }

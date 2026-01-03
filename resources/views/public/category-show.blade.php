@@ -1,28 +1,21 @@
 @extends('layouts.app')
 
 @push('seo')
-    @php
-        $title = $category->name . " | Lajme nga Bota Fokus";
-        $desc = "Lajmet dhe analizat më të fundit nga kategoria " . $category->name . ".";
-        $url = route('categories.show', $category->slug);
-        $image = asset('/bota-focus-og.jpg');
-    @endphp
-
-    <title>{{ $title }}</title>
-    <meta name="description" content="{{ $desc }}">
-    <link rel="canonical" href="{{ $url }}">
+    <title>{{ $seo['title'] }}</title>
+    <meta name="description" content="{{ $seo['description'] }}">
+    <link rel="canonical" href="{{ $seo['url'] }}">
 
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ $url }}">
-    <meta property="og:title" content="{{ $title }}">
-    <meta property="og:description" content="{{ $desc }}">
-    <meta property="og:image" content="{{ $image }}">
+    <meta property="og:url" content="{{ $seo['url'] }}">
+    <meta property="og:title" content="{{ $seo['title'] }}">
+    <meta property="og:description" content="{{ $seo['description'] }}">
+    <meta property="og:image" content="{{ $seo['image'] }}">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ $url }}">
-    <meta name="twitter:title" content="{{ $title }}">
-    <meta name="twitter:description" content="{{ $desc }}">
-    <meta name="twitter:image" content="{{ $image }}">
+    <meta name="twitter:url" content="{{ $seo['url'] }}">
+    <meta name="twitter:title" content="{{ $seo['title'] }}">
+    <meta name="twitter:description" content="{{ $seo['description'] }}">
+    <meta name="twitter:image" content="{{ $seo['image'] }}">
 @endpush
 
 @section('content')

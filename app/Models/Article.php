@@ -64,4 +64,13 @@ class Article extends Model
 
         return true;
     }
+
+    public function getParagraphsAttribute(): array
+    {
+        if (! $this->body) {
+            return [];
+        }
+
+        return preg_split("/\n\s*\n/", trim($this->body));
+    }
 }

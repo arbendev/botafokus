@@ -55,7 +55,15 @@ class HomePage extends Component
             ];
         });
 
-        return view('livewire.public.home-page', compact('hero', 'topStories', 'sections', 'latestTicker'))
+        // SEO Data
+        $seo = [
+            'title' => "Bota Fokus - Lajme, Analiza dhe Kontekst Global",
+            'description' => "Platformë lajmesh dhe analizash globale në gjuhën shqipe, me fokus tek saktësia, konteksti dhe verifikimi i fakteve.",
+            'image' => asset('/bota-focus-og.jpg'),
+            'url' => url('/'),
+        ];
+
+        return view('livewire.public.home-page', compact('hero', 'topStories', 'sections', 'latestTicker', 'seo'))
             ->layout('layouts.app');
     }
 }
