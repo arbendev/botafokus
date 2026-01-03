@@ -41,7 +41,9 @@ class HomePage extends Component
         // Helper to get excluded IDs so we don't repeat articles in sections
         $excludedIds = collect([]);
         if ($hero) $excludedIds->push($hero->id);
-        $excludedIds = $excludedIds->merge($topStories->pluck('id'));
+        // We will NOT exclude top stories from the sections below, 
+        // because with low content volume, this causes categories to disappear entirely.
+        // $excludedIds = $excludedIds->merge($topStories->pluck('id'));
 
         // Section blocks (each category => articles)
         // We will cycle through 4 layout types:
