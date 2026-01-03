@@ -45,44 +45,27 @@ class HomePage extends Component
         // because with low content volume, this causes categories to disappear entirely.
         // $excludedIds = $excludedIds->merge($topStories->pluck('id'));
 
-        // Defined Section Layouts matched to welcome.blade.php
-        $layoutMap = [
-            'bote' => 'grid-4',           // 4 items
-            'politike' => 'politics-3',   // 2 featured + list
-            'lufte-konflikte' => 'conflict-4', // 4 vertical items
-            'ekonomi-jetese' => 'economy-2',   // 1 big + list
-            'migrim-diaspora' => 'migration-3', // 3 cols (1 card, 1 card, 1 list)
-            'teknologji-siguri' => 'tech-3',   // 3 cols (1 card, 1 card, 1 list-half-width actually)
-            'shendet-shkence' => 'health-3',   // 3 cols (1 card, 1 card, 1 list)
-            'kulture-shoqeri' => 'culture-3',  // 3 cols similar to tech
-        ];
+        // Unified 4x2 Grid Layout: Fetch all active categories
+        // We want 8 categories total (or however many are active)
+        // Each needs 5 articles: 1 Featured + 4 List items
+        $categories = Category::where('active', true)
+            ->orderBy('order_index')
+            ->take(8) // Ensure we stick to the 4x2 design if strictly needed, or just all. User said "currently we have 8 categories" so getting all active is fine.
+            ->get();
 
-        $sections = collect();
-
-        foreach ($layoutMap as $slug => $layout) {
-            $cat = Category::where('slug', $slug)->first();
-            if (! $cat) continue;
-
-            $limit = match ($layout) {
-                'grid-4', 'conflict-4' => 4,
-                'politics-3', 'migration-3', 'tech-3', 'health-3', 'culture-3' => 5, // Reserve enough for list items
-                'economy-2' => 4,
-                default => 4
-            };
-
-            // Fetch latest articles for this category WITHOUT exclusion
+        $sections = $categories->map(function ($cat) {
+            // Fetch latest 5 articles for this category WITHOUT exclusion
             $articles = Article::where('status', 'published')
                 ->where('category_id', $cat->id)
                 ->orderByDesc('published_at')
-                ->limit($limit)
+                ->limit(5)
                 ->get();
 
-            $sections->push([
+            return [
                 'category' => $cat,
                 'articles' => $articles,
-                'layout' => $layout
-            ]);
-        }
+            ];
+        });
 
         // Videos (Mock or Real)
         // Check if Video model exists, otherwise use empty or mock
