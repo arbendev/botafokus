@@ -45,38 +45,44 @@ class HomePage extends Component
         // because with low content volume, this causes categories to disappear entirely.
         // $excludedIds = $excludedIds->merge($topStories->pluck('id'));
 
-        // Section blocks (each category => articles)
-        // We will cycle through 4 layout types:
-        // 0: 'grid' (4 cards row)
-        // 1: 'politics' (3 cols: 2 cards + 1 list)
-        // 2: 'conflict' (4 cols: small vertical cards)
-        // 3: 'economy' (2 cols: 1 huge + 1 list)
-        $sections = $categories->map(function ($cat, $index) use ($excludedIds) {
-            $layoutTypes = ['grid', 'politics', 'conflict', 'economy'];
-            $layout = $layoutTypes[$index % 4];
+        // Defined Section Layouts matched to welcome.blade.php
+        $layoutMap = [
+            'bote' => 'grid-4',           // 4 items
+            'politike' => 'politics-3',   // 2 featured + list
+            'lufte-konflikte' => 'conflict-4', // 4 vertical items
+            'ekonomi-jetese' => 'economy-2',   // 1 big + list
+            'migrim-diaspora' => 'migration-3', // 3 cols (1 card, 1 card, 1 list)
+            'teknologji-siguri' => 'tech-3',   // 3 cols (1 card, 1 card, 1 list-half-width actually)
+            'shendet-shkence' => 'health-3',   // 3 cols (1 card, 1 card, 1 list)
+            'kulture-shoqeri' => 'culture-3',  // 3 cols similar to tech
+        ];
 
-            // Decide limit based on layout
+        $sections = collect();
+
+        foreach ($layoutMap as $slug => $layout) {
+            $cat = Category::where('slug', $slug)->first();
+            if (! $cat) continue;
+
             $limit = match ($layout) {
-                'grid' => 4,
-                'politics' => 5, // 2 cards + 3 list items
-                'conflict' => 4,
-                'economy' => 4, // 1 large + 3 list items
+                'grid-4', 'conflict-4' => 4,
+                'politics-3', 'migration-3', 'tech-3', 'health-3', 'culture-3' => 5, // Reserve enough for list items
+                'economy-2' => 4,
                 default => 4
             };
 
+            // Fetch latest articles for this category WITHOUT exclusion
             $articles = Article::where('status', 'published')
                 ->where('category_id', $cat->id)
-                ->whereNotIn('id', $excludedIds)
                 ->orderByDesc('published_at')
                 ->limit($limit)
                 ->get();
 
-            return [
+            $sections->push([
                 'category' => $cat,
                 'articles' => $articles,
                 'layout' => $layout
-            ];
-        });
+            ]);
+        }
 
         // Videos (Mock or Real)
         // Check if Video model exists, otherwise use empty or mock

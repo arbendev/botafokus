@@ -119,10 +119,10 @@
                         </div>
 
                         <div class="row g-4">
-                            @if($layout === 'grid')
+                            @if($layout === 'grid-4' || $layout === 'conflict-4')
                                 {{-- 4 columns equal --}}
                                 @foreach($articles as $article)
-                                    <div class="col-md-6 col-lg-3">
+                                    <div class="@if($layout === 'conflict-4') col-md-3 @else col-md-6 col-lg-3 @endif">
                                         <article>
                                             <div class="bf-image-card">
                                                  @if($article->hero_image_url)
@@ -131,7 +131,7 @@
                                                     <div class="bg-light h-100"></div>
                                                  @endif
                                             </div>
-                                            <span class="bf-category-label small text-uppercase">{{ $cat->name }}</span>
+                                            @if($layout === 'grid-4') <span class="bf-category-label small text-uppercase">{{ $cat->name }}</span> @endif
                                             <h2 class="bf-card-title">
                                                 <a href="{{ route('articles.show', $article->slug) }}" class="text-reset text-decoration-none">
                                                     {{ $article->title }}
@@ -142,7 +142,7 @@
                                     </div>
                                 @endforeach
 
-                            @elseif($layout === 'politics')
+                            @elseif($layout === 'politics-3')
                                 {{-- 3 cols: 2 featured cards + 1 list --}}
                                 {{-- First 2 --}}
                                 @foreach($articles->take(2) as $article)
@@ -187,29 +187,7 @@
                                     </div>
                                 @endif
 
-                            @elseif($layout === 'conflict')
-                                {{-- 4 cols small vertical (similar to grid basically but maybe different styling if needed) --}}
-                                @foreach($articles as $article)
-                                    <div class="col-md-3">
-                                        <article>
-                                            <div class="bf-image-card">
-                                                @if($article->hero_image_url)
-                                                    <img src="{{ $article->hero_image_url }}" alt="" class="img-fluid">
-                                                @else
-                                                    <div class="bg-light h-100"></div>
-                                                @endif
-                                            </div>
-                                            <h2 class="bf-card-title">
-                                                <a href="{{ route('articles.show', $article->slug) }}" class="text-reset text-decoration-none">
-                                                    {{ $article->title }}
-                                                </a>
-                                            </h2>
-                                            <span class="bf-meta">{{ optional($article->published_at)->diffForHumans() }}</span>
-                                        </article>
-                                    </div>
-                                @endforeach
-
-                            @elseif($layout === 'economy')
+                            @elseif($layout === 'economy-2')
                                 {{-- Split: 1 large (col-lg-6) + list (col-lg-6) --}}
                                 @php $feat = $articles->first(); @endphp
                                 @if($feat)
@@ -246,6 +224,87 @@
                                                         </a>
                                                     </h6>
                                                     <span class="bf-meta">{{ optional($listArticle->published_at)->diffForHumans() }}</span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+
+                            @elseif($layout === 'migration-3' || $layout === 'health-3')
+                                {{-- 3 cols equal: 2 cards + 1 list --}}
+                                @foreach($articles->take(2) as $article)
+                                    <div class="col-md-4">
+                                        <article>
+                                            <div class="bf-image-card">
+                                                @if($article->hero_image_url)
+                                                    <img src="{{ $article->hero_image_url }}" alt="" class="img-fluid">
+                                                @else
+                                                    <div class="bg-light h-100"></div>
+                                                @endif
+                                            </div>
+                                            <h2 class="bf-card-title">
+                                                <a href="{{ route('articles.show', $article->slug) }}" class="text-reset text-decoration-none">
+                                                    {{ $article->title }}
+                                                </a>
+                                            </h2>
+                                            <span class="bf-meta">{{ optional($article->published_at)->diffForHumans() }}</span>
+                                        </article>
+                                    </div>
+                                @endforeach
+
+                                @if($articles->skip(2)->count())
+                                    <div class="col-md-4">
+                                        <ul class="bf-text-list">
+                                            @foreach($articles->skip(2) as $listArticle)
+                                                <li>
+                                                    <h6>
+                                                        <a href="{{ route('articles.show', $listArticle->slug) }}" class="text-reset text-decoration-none">
+                                                            {{ $listArticle->title }}
+                                                        </a>
+                                                    </h6>
+                                                    @if($layout === 'migration-3')
+                                                        <span class="bf-meta">{{ optional($listArticle->published_at)->diffForHumans() }}</span>
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+
+                            @elseif($layout === 'tech-3' || $layout === 'culture-3')
+                                {{-- 3 cols weighted: 2 small (col-md-3) + 1 wide list (col-md-6) --}}
+                                @foreach($articles->take(2) as $article)
+                                    <div class="col-md-3">
+                                        <article>
+                                            <div class="bf-image-card">
+                                                @if($article->hero_image_url)
+                                                    <img src="{{ $article->hero_image_url }}" alt="" class="img-fluid">
+                                                @else
+                                                    <div class="bg-light h-100"></div>
+                                                @endif
+                                            </div>
+                                            <h2 class="bf-card-title">
+                                                <a href="{{ route('articles.show', $article->slug) }}" class="text-reset text-decoration-none">
+                                                    {{ $article->title }}
+                                                </a>
+                                            </h2>
+                                        </article>
+                                    </div>
+                                @endforeach
+
+                                @if($articles->skip(2)->count())
+                                    <div class="col-md-6">
+                                        <ul class="bf-text-list">
+                                            @foreach($articles->skip(2) as $listArticle)
+                                                <li>
+                                                    <h6>
+                                                        <a href="{{ route('articles.show', $listArticle->slug) }}" class="text-reset text-decoration-none">
+                                                            {{ $listArticle->title }}
+                                                        </a>
+                                                    </h6>
+                                                    @if($layout === 'tech-3')
+                                                        <span class="bf-meta">{{ optional($listArticle->published_at)->diffForHumans() }}</span>
+                                                    @endif
                                                 </li>
                                             @endforeach
                                         </ul>
