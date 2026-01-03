@@ -35,25 +35,53 @@ class HomePage extends Component
         // Latest ticker
         $latestTicker = Article::where('status', 'published')
             ->orderByDesc('published_at')
-            ->limit(8)
+            ->limit(5)
             ->get();
 
-        // Section blocks (each category => articles)
-        $sections = $categories->map(function ($cat) use ($hero) {
-            $q = Article::where('status', 'published')
-                ->where('category_id', $cat->id)
-                ->orderByDesc('published_at')
-                ->limit(6);
+        // Helper to get excluded IDs so we don't repeat articles in sections
+        $excludedIds = collect([]);
+        if ($hero) $excludedIds->push($hero->id);
+        $excludedIds = $excludedIds->merge($topStories->pluck('id'));
 
-            if ($hero) {
-                $q->where('id', '!=', $hero->id);
-            }
+        // Section blocks (each category => articles)
+        // We will cycle through 4 layout types:
+        // 0: 'grid' (4 cards row)
+        // 1: 'politics' (3 cols: 2 cards + 1 list)
+        // 2: 'conflict' (4 cols: small vertical cards)
+        // 3: 'economy' (2 cols: 1 huge + 1 list)
+        $sections = $categories->map(function ($cat, $index) use ($excludedIds) {
+            $layoutTypes = ['grid', 'politics', 'conflict', 'economy'];
+            $layout = $layoutTypes[$index % 4];
+
+            // Decide limit based on layout
+            $limit = match ($layout) {
+                'grid' => 4,
+                'politics' => 5, // 2 cards + 3 list items
+                'conflict' => 4,
+                'economy' => 4, // 1 large + 3 list items
+                default => 4
+            };
+
+            $articles = Article::where('status', 'published')
+                ->where('category_id', $cat->id)
+                ->whereNotIn('id', $excludedIds)
+                ->orderByDesc('published_at')
+                ->limit($limit)
+                ->get();
 
             return [
                 'category' => $cat,
-                'articles' => $q->get(),
+                'articles' => $articles,
+                'layout' => $layout
             ];
         });
+
+        // Videos (Mock or Real)
+        // Check if Video model exists, otherwise use empty or mock
+        $videos = collect([]);
+        if (class_exists(\App\Models\Video::class)) {
+             $videos = \App\Models\Video::orderByDesc('published_at')->limit(5)->get();
+        }
 
         // SEO Data
         $seo = [
@@ -63,7 +91,7 @@ class HomePage extends Component
             'url' => url('/'),
         ];
 
-        return view('livewire.public.home-page', compact('hero', 'topStories', 'sections', 'latestTicker', 'seo'))
+        return view('livewire.public.home-page', compact('hero', 'topStories', 'sections', 'latestTicker', 'seo', 'videos'))
             ->layout('layouts.app');
     }
 }
