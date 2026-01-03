@@ -53,19 +53,34 @@ class HomePage extends Component
             ->take(8) // Ensure we stick to the 4x2 design if strictly needed, or just all. User said "currently we have 8 categories" so getting all active is fine.
             ->get();
 
-        $sections = $categories->map(function ($cat) {
+        // Track IDs to prevent duplication across categories
+        $globalExcludedIds = collect();
+        if ($hero) {
+            $globalExcludedIds->push($hero->id);
+        }
+        // Optionally exclude top stories too if we want zero overlap there
+        // $globalExcludedIds = $globalExcludedIds->merge($topStories->pluck('id'));
+
+        $sections = collect();
+
+        foreach ($categories as $cat) {
             // Fetch latest 5 articles for this category via Many-to-Many relationship
+            // Exclude ANY article already shown in Hero or previous categories
             $articles = $cat->articles()
                 ->where('status', 'published')
+                ->whereNotIn('articles.id', $globalExcludedIds)
                 ->orderByDesc('published_at')
                 ->limit(5)
                 ->get();
 
-            return [
+            // Add these to the excluded list so they don't show up in next categories
+            $globalExcludedIds = $globalExcludedIds->merge($articles->pluck('id'));
+
+            $sections->push([
                 'category' => $cat,
                 'articles' => $articles,
-            ];
-        });
+            ]);
+        }
 
         // Videos (Mock or Real)
         // Check if Video model exists, otherwise use empty or mock
