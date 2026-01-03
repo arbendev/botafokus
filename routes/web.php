@@ -94,4 +94,5 @@ Auth::routes();
 Route::get('/categories/article', fn() => view('news.show'));
 Route::get('/videos', fn() => view('videos.index'));
 Route::get('/videos/video', fn() => view('videos.show'));
-Route::get('/search', fn() => view('search.index'));
+Route::get('/search', [App\Http\Controllers\Public\SearchController::class, 'index'])
+    ->name('search.index');

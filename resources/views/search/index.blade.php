@@ -1,171 +1,151 @@
-    <div class="container-xl px-3">
+@extends('layouts.app')
 
-        <!-- Search header -->
-        <section class="bf-search-header mb-4">
-            <form class="bf-search-bar-inner">
-                <label for="siteSearch" class="form-label small text-uppercase fw-semibold text-muted mb-1">
-                    Kërko në BotaFokus
-                </label>
-                <div class="input-group input-group-lg">
-                    <input type="search" id="siteSearch" class="form-control bf-search-main-input"
-                        placeholder="Shkruaj një fjalë kyçe, p.sh. “Ukraina”, “NATO”, “inflacioni global”">
-                    <button class="btn btn-dark" type="submit">Kërko</button>
-                </div>
-            </form>
+@section('title', $seo['title'])
 
-            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 gap-2">
-                <div class="bf-search-term">
-                    Rezultatet për: <span>“Ukraina”</span>
-                    <span class="bf-search-count">23 artikuj</span>
-                </div>
+@push('seo')
+    <meta name="description" content="{{ $seo['description'] }}">
+    <link rel="canonical" href="{{ $seo['url'] }}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ $seo['url'] }}">
+    <meta property="og:title" content="{{ $seo['title'] }}">
+    <meta property="og:description" content="{{ $seo['description'] }}">
+    <meta property="og:image" content="{{ $seo['image'] }}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ $seo['url'] }}">
+    <meta name="twitter:title" content="{{ $seo['title'] }}">
+    <meta name="twitter:description" content="{{ $seo['description'] }}">
+    <meta name="twitter:image" content="{{ $seo['image'] }}">
+
+    @php
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'SearchResultsPage',
+            'mainEntity' => [
+                '@type' => 'ItemList',
+                'itemListElement' => $articles->map(function ($article, $index) {
+                    return [
+                        '@type' => 'ListItem',
+                        'position' => $index + 1,
+                        'url' => route('articles.show', $article->slug),
+                        'name' => $article->title,
+                    ];
+                })->toArray(),
+            ],
+        ];
+    @endphp
+
+    <script type="application/ld+json">
+        {!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+@endpush
+
+@section('content')
+    <div class="container-xl px-3 py-4">
+
+        <!-- Search Header Area -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h1 class="h3 fw-bold mb-3">Kërkimi</h1>
+                <form action="{{ route('search.index') }}" method="GET" class="position-relative">
+                    <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border">
+                        <span class="input-group-text bg-white border-0 ps-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-search text-muted" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                        </span>
+                        <input type="search" name="q" class="form-control border-0 ps-3" 
+                            placeholder="Kërko artikuj, tema ose analiza..." 
+                            value="{{ $query }}" aria-label="Search">
+                        <button class="btn btn-dark px-4 fw-semibold" type="submit">Kërko</button>
+                    </div>
+                </form>
+                @if ($query)
+                    <div class="mt-3 text-muted small">
+                         Rezultatet për: <span class="fw-bold text-dark">“{{ $query }}”</span> &bull; {{ $articles->total() }} gjetje
+                    </div>
+                @endif
             </div>
-        </section>
+        </div>
 
-        <!-- Search results layout -->
-        <div class="row g-4 bf-search-main">
+        <div class="row g-5">
+            <!-- Main Results Column -->
+            <div class="col-lg-8 mx-auto">
+                
+                @if ($articles->count())
+                    <div class="d-flex flex-column gap-4">
+                        @foreach ($articles as $article)
+                            <article class="card border-0 shadow-sm rounded-3 overflow-hidden h-100 search-result-card">
+                                <div class="row g-0">
+                                    @if ($article->hero_image_url)
+                                        <div class="col-md-4 position-relative">
+                                            <a href="{{ route('articles.show', $article->slug) }}" class="ratio ratio-4x3 d-block h-100">
+                                                <img src="{{ $article->hero_image_url }}" 
+                                                    class="img-fluid object-fit-cover w-100 h-100" 
+                                                    alt="{{ $article->hero_image_alt ?? '' }}">
+                                            </a>
+                                        </div>
+                                    @endif
+                                    <div class="{{ $article->hero_image_url ? 'col-md-8' : 'col-12' }}">
+                                        <div class="card-body p-4 d-flex flex-column h-100 justify-content-center">
+                                            <div class="mb-2 d-flex align-items-center gap-2 text-uppercase small text-muted fw-semibold">
+                                                <span class="badge bg-light text-dark border">{{ $article->category->name ?? 'Lajme' }}</span>
+                                                <span>&bull;</span>
+                                                <span>{{ optional($article->published_at)->diffForHumans() }}</span>
+                                            </div>
+                                            <h3 class="card-title h5 fw-bold mb-2">
+                                                <a href="{{ route('articles.show', $article->slug) }}" class="text-decoration-none text-dark stretched-link">
+                                                    {{ $article->title }}
+                                                </a>
+                                            </h3>
+                                            @if ($article->lead)
+                                                <p class="card-text text-secondary mb-0 small line-clamp-2">
+                                                    {{ Str::limit($article->lead, 140) }}
+                                                </p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
 
-            <!-- LEFT: RESULTS -->
-            <section class="col-lg-9">
-                <ul class="bf-search-results">
-                    <!-- Result 1 -->
-                    <li class="bf-search-result">
-                        <a href="#" class="d-flex align-items-start gap-3">
-                            <div class="bf-search-result-thumb">
-                                <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=400&q=80"
-                                    alt="Fronti i konfliktit">
+                    <div class="mt-5 d-flex justify-content-center">
+                        {{ $articles->links() }}
+                    </div>
+                @else
+                    @if ($query)
+                        <div class="text-center py-5">
+                            <div class="mb-3 text-muted opacity-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-journal-x" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M6.146 6.146a.5.5 0 0 1 .708 0L8 7.293l1.146-1.147a.5.5 0 1 1 .708.708L8.707 8l1.147 1.146a.5.5 0 0 1-.708.708L8 8.707 6.854 9.854a.5.5 0 0 1-.708-.708L7.293 8 6.146 6.854a.5.5 0 0 1 0-.708z"/>
+                                    <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
+                                    <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>
+                                </svg>
                             </div>
-                            <div class="bf-search-result-body">
-                                <div class="bf-meta mb-1">Botë • 35 min më parë</div>
-                                <h2 class="bf-search-result-title">
-                                    Rusia paralajmëron zgjerim të konfliktit nëse bisedimet për paqe dështojnë
-                                </h2>
-                                <p class="bf-search-result-snippet">
-                                    Qeveria ruse thotë se do të “marrë më shumë territor” nëse Perëndimi nuk pranon
-                                    kompromiset e propozuara, ndërsa diplomatët europianë e shohin këtë si presion ndaj
-                                    Kievit.
-                                </p>
-                            </div>
-                        </a>
-                    </li>
-
-                    <!-- Result 2 -->
-                    <li class="bf-search-result">
-                        <a href="#" class="d-flex align-items-start gap-3">
-                            <div class="bf-search-result-thumb">
-                                <img src="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=400&q=80"
-                                    alt="Takim diplomatik">
-                            </div>
-                            <div class="bf-search-result-body">
-                                <div class="bf-meta mb-1">Analizë • 2 orë më parë</div>
-                                <h2 class="bf-search-result-title">
-                                    Analizë: A po lodhet Perëndimi nga lufta në Ukrainë?
-                                </h2>
-                                <p class="bf-search-result-snippet">
-                                    Vendet që kanë dërguar miliarda në ndihmë ushtarake po përballen me presion politik
-                                    të brendshëm,
-                                    por analistët thonë se mbështetja strategjike mbetet e fortë.
-                                </p>
-                            </div>
-                        </a>
-                    </li>
-
-                    <!-- Result 3 -->
-                    <li class="bf-search-result">
-                        <a href="#" class="d-flex align-items-start gap-3">
-                            <div class="bf-search-result-thumb d-none d-sm-block">
-                                <img src="https://images.unsplash.com/photo-1516541196182-6bdb0516ed27?auto=format&fit=crop&w=400&q=80"
-                                    alt="Samit ndërkombëtar">
-                            </div>
-                            <div class="bf-search-result-body">
-                                <div class="bf-meta mb-1">NATO • 5 orë më parë</div>
-                                <h2 class="bf-search-result-title">
-                                    Aleatët diskutojnë zgjerimin e mbështetjes për mbrojtjen ajrore të Ukrainës
-                                </h2>
-                                <p class="bf-search-result-snippet">
-                                    Ministrat e mbrojtjes mblidhen në Bruksel për të gjetur mënyra si të forcojnë
-                                    sistemet raketore dhe të mbrojtjes nga dronët.
-                                </p>
-                            </div>
-                        </a>
-                    </li>
-
-                    <!-- Result 4 (no image example) -->
-                    <li class="bf-search-result">
-                        <a href="#" class="d-flex align-items-start gap-3">
-                            <div class="bf-search-result-body w-100">
-                                <div class="bf-meta mb-1">Opinion • Dje</div>
-                                <h2 class="bf-search-result-title">
-                                    Opinion: Çfarë nënkupton lufta në Ukrainë për sigurinë energjetike të Europës?
-                                </h2>
-                                <p class="bf-search-result-snippet">
-                                    Kriza ka ekspozuar varësinë e kontinentit nga gazi rus dhe po shtyn vendet drejt
-                                    burimeve të reja energjie dhe aleancave të reja ekonomike.
-                                </p>
-                            </div>
-                        </a>
-                    </li>
-
-                    <!-- Result 5 -->
-                    <li class="bf-search-result">
-                        <a href="#" class="d-flex align-items-start gap-3">
-                            <div class="bf-search-result-thumb d-none d-sm-block">
-                                <img src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=400&q=80"
-                                    alt="Qytet i shkatërruar">
-                            </div>
-                            <div class="bf-search-result-body">
-                                <div class="bf-meta mb-1">Botë • 2 ditë më parë</div>
-                                <h2 class="bf-search-result-title">
-                                    OKB: Dëmet infrastrukturore në Ukrainë kalojnë 400 miliardë dollarë
-                                </h2>
-                                <p class="bf-search-result-snippet">
-                                    Një raport i ri vlerëson koston e rindërtimit dhe evidenton zonat ku investimet janë
-                                    më urgjente për rikthimin e shërbimeve bazë.
-                                </p>
-                            </div>
-                        </a>
-                    </li>
-                </ul>
-
-                <!-- Pagination -->
-                <nav class="mt-3" aria-label="Faqet e rezultateve të kërkimit">
-                    <ul class="pagination pagination-sm">
-                        <li class="page-item disabled"><span class="page-link">‹</span></li>
-                        <li class="page-item active"><span class="page-link">1</span></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item"><a class="page-link" href="#">›</a></li>
-                    </ul>
-                </nav>
-            </section>
-
-            <!-- RIGHT: SIDEBAR -->
-            <aside class="col-lg-3">
-                <div class="bf-search-sidebar position-sticky">
-
-                    <!-- Related searches -->
-                    <section class="mb-4">
-                        <h6 class="bf-related-title">Kërkime të ngjashme</h6>
-                        <ul class="bf-related-searches">
-                            <li><a href="#">Ukraina NATO</a></li>
-                            <li><a href="#">Sanksionet ndaj Rusisë</a></li>
-                            <li><a href="#">Kriza e energjisë në Europë</a></li>
-                            <li><a href="#">Refugjatët nga Ukraina</a></li>
-                            <li><a href="#">Analiza gjeopolitike</a></li>
-                        </ul>
-                    </section>
-
-                    <!-- Most read for this term -->
-                    <section class="bf-trending-block">
-                        <h6 class="bf-related-title">Më të lexuarat për “Ukraina”</h6>
-                        <ol class="bf-trending-list">
-                            <li><a href="#">Raport: Fronti lindor përballet me dimrin më të vështirë</a></li>
-                            <li><a href="#">Si po ndryshon balanca ushtarake mes Kievit dhe Moskës</a></li>
-                            <li><a href="#">Çfarë roli po luajnë dronët në luftë</a></li>
-                            <li><a href="#">BE miraton fond të ri për rindërtimin e Ukrainës</a></li>
-                            <li><a href="#">Historia e një familjeje që i shpëtoi bombardimeve</a></li>
-                        </ol>
-                    </section>
-                </div>
-            </aside>
+                            <h4 class="fw-bold">Nuk u gjet asnjë rezultat</h4>
+                            <p class="text-muted">Provoni fjalë kyçe më të përgjithshme ose kontrolloni gabimet.</p>
+                        </div>
+                    @endif
+                @endif
+            </div>
         </div>
     </div>
+
+    <style>
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .search-result-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .search-result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.1) !important;
+        }
+    </style>
+@endsection
