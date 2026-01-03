@@ -1,3 +1,42 @@
+@push('seo')
+    @php
+        $title = "Bota Fokus - Lajme, Analiza dhe Kontekst Global";
+        $desc = "Platformë lajmesh dhe analizash globale në gjuhën shqipe, me fokus tek saktësia, konteksti dhe verifikimi i fakteve.";
+        $url = url('/');
+        $image = asset('/bota-focus-og.jpg');
+    @endphp
+
+    <title>{{ $title }}</title>
+    <meta name="description" content="{{ $desc }}">
+    <link rel="canonical" href="{{ $url }}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ $url }}">
+    <meta property="og:title" content="{{ $title }}">
+    <meta property="og:description" content="{{ $desc }}">
+    <meta property="og:image" content="{{ $image }}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ $url }}">
+    <meta name="twitter:title" content="{{ $title }}">
+    <meta name="twitter:description" content="{{ $desc }}">
+    <meta name="twitter:image" content="{{ $image }}">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Bota Fokus",
+      "url": "{{ $url }}",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "{{ $url }}/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+@endpush
+
 <div class="container-xl px-3 py-4">
     <div class="row g-4">
         {{-- MAIN CONTENT --}}

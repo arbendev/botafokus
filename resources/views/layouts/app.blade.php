@@ -7,7 +7,9 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Bota Fokus') }}</title>
+    <title>@yield('title', config('app.name', 'Bota Fokus'))</title>
+
+    @stack('seo')
 
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
